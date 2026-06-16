@@ -224,14 +224,13 @@ function cleanLog() {
             /^Line too long/i.test(cleanedLine) ||
             /^\s*\[\s*obvious exits:/i.test(cleanedLine) ||
             /^\(tic_timer\):/i.test(cleanedLine) ||
-            /^(em|emo)\b/i.test(cleanedLine) ||
             /^You can't /i.test(cleanedLine) ||
             /^You don't see/i.test(cleanedLine) ||
             /^They aren't here/i.test(cleanedLine) ||
             /^Alas, you cannot/i.test(cleanedLine) ||
             /^Communication echo /i.test(cleanedLine) ||
             cleanedLine === "Ok." || 
-            cleanedLine.includes("has arrived from the/i") ||
+            cleanedLine.includes("has arrived from the west.") ||
             cleanedLine.includes("disappears into the void.") ||
             cleanedLine.includes("has returned.") ||
             cleanedLine.includes("You are hungry.") ||
@@ -260,20 +259,19 @@ function cleanLog() {
                 continue;
             }
         } 
-                else if (echoMode === 'echoOff') {
+        else if (echoMode === 'echoOff') {
             if (/^say\s+/i.test(cleanedLine)) {
                 cleanedLine = cleanedLine.replace(/^say\s+(.+)/i, `${charName} says '$1'`);
             } else if (/^(em|emo|emote)\s+/i.test(cleanedLine)) {
-                // Catches em, emo, or emote at the start of the line and replaces it with the CharName
+                // Changes em, emo, or emote at the start of the line into the CharName variable value
                 cleanedLine = cleanedLine.replace(/^(em|emo|emote)\s+(.+)/i, `${charName} $2`);
                 
-                // Strip self references if you manually typed the character name right after the command
-                const nameRegex = new RegExp(`^${charName}\\s+${charName}\\s+`, 'i');
+                // Double-name cleanup safety net
+                const doubleNameRegex = new RegExp(`^${charName}\\s+${charName}\\s+`, 'i');
                 if (cleanedLine.toLowerCase().startsWith((charName + " " + charName).toLowerCase())) {
-                    cleanedLine = cleanedLine.replace(nameRegex, `${charName} `);
+                    cleanedLine = cleanedLine.replace(doubleNameRegex, `${charName} `);
                 }
             } else if (/^whisper\s+(\w+)\s+(.+)/i.test(cleanedLine)) {
-
                 cleanedLine = cleanedLine.replace(/^whisper\s+(\w+)\s+(.+)/i, `${charName} whispers to $1 '$2'`);
             } else {
                 const firstWord = cleanedLine.split(/\s+/)[0].toLowerCase();
@@ -283,7 +281,7 @@ function cleanLog() {
             }
         }
 
-        // 5. Dynamic Name Setup & Server-Echo Formatting adjustments
+        // 5. Server-Echo Formatting adjustments (For Echo On remnants)
         cleanedLine = cleanedLine.replace(/^You say '(.+)'/i, `${charName} says '$1'`);
         cleanedLine = cleanedLine.replace(/^You emote:\s+(.+)/i, `$1`);
         
