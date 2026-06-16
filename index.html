@@ -203,12 +203,13 @@ function cleanLog() {
     const keepChats = document.getElementById('chatsMenu').value === 'Keep';
     const echoMode = document.getElementById('echoMenu').value;
 
-    const lines = rawText.split('\n');
+    // Split and pre-clean lines to eliminate hidden carriage returns completely
+    const lines = rawText.split('\n').map(line => line.trim());
     let cleanedLines = [];
     let lastAdded = "";
 
     for (let i = 0; i < lines.length; i++) {
-        let cleanedLine = lines[i].trim();
+        let cleanedLine = lines[i];
         if (!cleanedLine) continue;
 
         // 1. Filter Vitals Prompts completely
@@ -254,12 +255,12 @@ function cleanLog() {
 
         // 4. Mode Logic Injection
         if (echoMode === 'echoOn') {
-            // Strip raw shorthand console entry echo (em, emo, emote)
+            // Strip raw console echoes (em, emo, emote lines) cleanly
             if (/^(em|emo|emote)\s+/i.test(cleanedLine)) {
                 continue;
             }
             
-            // Standard command filtering
+            // Standard command removal
             const firstWord = cleanedLine.split(/\s+/)[0].toLowerCase();
             if (wotmudCommands.has(firstWord) && !/^You\s/i.test(cleanedLine)) {
                 continue;
@@ -285,33 +286,56 @@ function cleanLog() {
             }
         }
 
-        // 5. Server-Echo Formatting adjustments (Handles server output translation)
+        // 5. Server-Echo Formatting & Social Translation adjustments
         if (/^You say '(.+)'/i.test(cleanedLine)) {
             cleanedLine = cleanedLine.replace(/^You say '(.+)'/i, `${charName} says '$1'`);
-        } else if (/^You emote:\s+(.+)/i.test(cleanedLine)) {
+        } 
+        // Automatically turns generic "You snuggle/nod/smile at him." into dynamic third-person actions
+        else if (/^You\s+(\w+)(s|es)?(\s+.+)?\.$/i.test(cleanedLine) && !cleanedLine.toLowerCase().startsWith("you emote")) {
+            cleanedLine = cleanedLine.replace(/^You\s+(\w+?)(es|s)?(\s+.+)?\.$/i, function(match, verb, suffix, rest) {
+                let thirdPersonVerb = verb;
+                // Basic linguistic check to transform verbs smoothly (e.g., snuggle -> snuggles, nod -> nods)
+                if (!verb.endsWith('s') && !verb.endsWith('sh') && !verb.endsWith('ch')) {
+                    thirdPersonVerb = verb + "s";
+                } else if (verb.endsWith('sh') || verb.endsWith('ch')) {
+                    thirdPersonVerb = verb + "es";
+                }
+                return `${charName} ${thirdPersonVerb}${rest || ""}.`;
+            });
+        } 
+        // Emote tracking and multi-line piece rebuild logic
+        else if (/^You emote:\s+(.+)/i.test(cleanedLine)) {
             cleanedLine = cleanedLine.replace(/^You emote:\s+(.+)/i, `$1`);
             
-            // If the server chopped the emote line into fragments, join it seamlessly with the next segment
             let nextIndex = i + 1;
-            while (nextIndex < lines.length && 
-                   lines[nextIndex].trim() && 
-                   !/^\*.*HP:/i.test(lines[nextIndex].trim()) && 
-                   !/^\(tic_timer\):/i.test(lines[nextIndex].trim()) &&
-                   !wotmudCommands.has(lines[nextIndex].trim().split(/\s+/)[0].toLowerCase())) {
-                cleanedLine += " " + lines[nextIndex].trim();
-                i = nextIndex; // Move main loop counter past the consumed fragment
+            while (nextIndex < lines.length) {
+                let nextLine = lines[nextIndex];
+                if (!nextLine) {
+                    nextIndex++;
+                    continue;
+                }
+                // Break out of combining if we hit a system line or command anchor
+                if (/^\*.*HP:/i.test(nextLine) || 
+                    nextLine === ">" ||
+                    /^\(tic_timer\):/i.test(nextLine) ||
+                    /^(em|emo|emote)\s+/i.test(nextLine) ||
+                    wotmudCommands.has(nextLine.split(/\s+/)[0].toLowerCase())) {
+                    break;
+                }
+                cleanedLine += " " + nextLine;
+                i = nextIndex; 
                 nextIndex++;
             }
         }
         
-        // Final name scrubbing checks
+        // Final Double Name structural scrub
         const doubleNameRegex = new RegExp(`^${charName}\\s+${charName}\\s+`, 'i');
         if (cleanedLine.toLowerCase().startsWith(charName.toLowerCase() + " ")) {
             cleanedLine = cleanedLine.replace(doubleNameRegex, `${charName} `);
         }
         cleanedLine = cleanedLine.replace(/^You whisper to (\w+)\s+'(.+)'/i, `${charName} whispers to $1 '$2'`);
 
-        // Prevent identical back-to-back entries
+        // Eliminate double identical outputs
         if (cleanedLine === lastAdded) {
             continue;
         }
