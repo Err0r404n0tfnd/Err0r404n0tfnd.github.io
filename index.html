@@ -203,7 +203,6 @@ function cleanLog() {
     const keepChats = document.getElementById('chatsMenu').value === 'Keep';
     const echoMode = document.getElementById('echoMenu').value;
 
-    // Split and pre-clean lines to eliminate hidden carriage returns completely
     const lines = rawText.split('\n').map(line => line.trim());
     let cleanedLines = [];
     let lastAdded = "";
@@ -255,12 +254,10 @@ function cleanLog() {
 
         // 4. Mode Logic Injection
         if (echoMode === 'echoOn') {
-            // Strip raw console echoes (em, emo, emote lines) cleanly
             if (/^(em|emo|emote)\s+/i.test(cleanedLine)) {
                 continue;
             }
             
-            // Standard command removal
             const firstWord = cleanedLine.split(/\s+/)[0].toLowerCase();
             if (wotmudCommands.has(firstWord) && !/^You\s/i.test(cleanedLine)) {
                 continue;
@@ -290,19 +287,6 @@ function cleanLog() {
         if (/^You say '(.+)'/i.test(cleanedLine)) {
             cleanedLine = cleanedLine.replace(/^You say '(.+)'/i, `${charName} says '$1'`);
         } 
-        // Automatically turns generic "You snuggle/nod/smile at him." into dynamic third-person actions
-        else if (/^You\s+(\w+)(s|es)?(\s+.+)?\.$/i.test(cleanedLine) && !cleanedLine.toLowerCase().startsWith("you emote")) {
-            cleanedLine = cleanedLine.replace(/^You\s+(\w+?)(es|s)?(\s+.+)?\.$/i, function(match, verb, suffix, rest) {
-                let thirdPersonVerb = verb;
-                // Basic linguistic check to transform verbs smoothly (e.g., snuggle -> snuggles, nod -> nods)
-                if (!verb.endsWith('s') && !verb.endsWith('sh') && !verb.endsWith('ch')) {
-                    thirdPersonVerb = verb + "s";
-                } else if (verb.endsWith('sh') || verb.endsWith('ch')) {
-                    thirdPersonVerb = verb + "es";
-                }
-                return `${charName} ${thirdPersonVerb}${rest || ""}.`;
-            });
-        } 
         // Emote tracking and multi-line piece rebuild logic
         else if (/^You emote:\s+(.+)/i.test(cleanedLine)) {
             cleanedLine = cleanedLine.replace(/^You emote:\s+(.+)/i, `$1`);
@@ -314,7 +298,6 @@ function cleanLog() {
                     nextIndex++;
                     continue;
                 }
-                // Break out of combining if we hit a system line or command anchor
                 if (/^\*.*HP:/i.test(nextLine) || 
                     nextLine === ">" ||
                     /^\(tic_timer\):/i.test(nextLine) ||
@@ -326,6 +309,23 @@ function cleanLog() {
                 i = nextIndex; 
                 nextIndex++;
             }
+        }
+        // Catches "You snuggle him." or "You nod dynamically." and formats to third person
+        else if (/^You\s+(\w+)(.*)/i.test(cleanedLine)) {
+            cleanedLine = cleanedLine.replace(/^You\s+(\w+)(.*)/i, function(match, verb, rest) {
+                let thirdPersonVerb = verb;
+                let lowerVerb = verb.toLowerCase();
+                
+                // Rules for structural third person conversion
+                if (lowerVerb.endsWith('sh') || lowerVerb.endsWith('ch') || lowerVerb.endsWith('x') || lowerVerb.endsWith('z')) {
+                    thirdPersonVerb = verb + "es";
+                } else if (lowerVerb.endsWith('y') && !/[aeiou]y$/i.test(lowerVerb)) {
+                    thirdPersonVerb = verb.slice(0, -1) + "ies";
+                } else if (!lowerVerb.endsWith('s')) {
+                    thirdPersonVerb = verb + "s";
+                }
+                return `${charName} ${thirdPersonVerb}${rest}`;
+            });
         }
         
         // Final Double Name structural scrub
