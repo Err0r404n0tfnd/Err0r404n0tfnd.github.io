@@ -254,6 +254,12 @@ function cleanLog() {
 
         // 4. Mode Logic Injection
         if (echoMode === 'echoOn') {
+            // Strip raw shorthand console entry echo (em, emo, emote)
+            if (/^(em|emo|emote)\s+/i.test(cleanedLine)) {
+                continue;
+            }
+            
+            // Standard command filtering
             const firstWord = cleanedLine.split(/\s+/)[0].toLowerCase();
             if (wotmudCommands.has(firstWord) && !/^You\s/i.test(cleanedLine)) {
                 continue;
@@ -263,7 +269,8 @@ function cleanLog() {
             if (/^say\s+/i.test(cleanedLine)) {
                 cleanedLine = cleanedLine.replace(/^say\s+(.+)/i, `${charName} says '$1'`);
             } else if (/^(em|emo|emote)\s+/i.test(cleanedLine)) {
-                cleanedLine = cleanedLine.replace(/^(em|emo|emote)\s+(.+)/i, `${charName} $2`)
+                cleanedLine = cleanedLine.replace(/^(em|emo|emote)\s+(.+)/i, `${charName} $2`);
+                
                 const doubleNameRegex = new RegExp(`^${charName}\\s+${charName}\\s+`, 'i');
                 if (cleanedLine.toLowerCase().startsWith((charName + " " + charName).toLowerCase())) {
                     cleanedLine = cleanedLine.replace(doubleNameRegex, `${charName} `);
@@ -278,10 +285,26 @@ function cleanLog() {
             }
         }
 
-        // 5. Server-Echo Formatting adjustments (For Echo On remnants)
-        cleanedLine = cleanedLine.replace(/^You say '(.+)'/i, `${charName} says '$1'`);
-        cleanedLine = cleanedLine.replace(/^You emote:\s+(.+)/i, `$1`);
+        // 5. Server-Echo Formatting adjustments (Handles server output translation)
+        if (/^You say '(.+)'/i.test(cleanedLine)) {
+            cleanedLine = cleanedLine.replace(/^You say '(.+)'/i, `${charName} says '$1'`);
+        } else if (/^You emote:\s+(.+)/i.test(cleanedLine)) {
+            cleanedLine = cleanedLine.replace(/^You emote:\s+(.+)/i, `$1`);
+            
+            // If the server chopped the emote line into fragments, join it seamlessly with the next segment
+            let nextIndex = i + 1;
+            while (nextIndex < lines.length && 
+                   lines[nextIndex].trim() && 
+                   !/^\*.*HP:/i.test(lines[nextIndex].trim()) && 
+                   !/^\(tic_timer\):/i.test(lines[nextIndex].trim()) &&
+                   !wotmudCommands.has(lines[nextIndex].trim().split(/\s+/)[0].toLowerCase())) {
+                cleanedLine += " " + lines[nextIndex].trim();
+                i = nextIndex; // Move main loop counter past the consumed fragment
+                nextIndex++;
+            }
+        }
         
+        // Final name scrubbing checks
         const doubleNameRegex = new RegExp(`^${charName}\\s+${charName}\\s+`, 'i');
         if (cleanedLine.toLowerCase().startsWith(charName.toLowerCase() + " ")) {
             cleanedLine = cleanedLine.replace(doubleNameRegex, `${charName} `);
