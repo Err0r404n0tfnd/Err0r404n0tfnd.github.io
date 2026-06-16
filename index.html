@@ -125,7 +125,7 @@
     <div class="controls">
         <div class="control-group">
             <label for="charName">Character Name:</label>
-            <input type="text" id="charName" value="Amitriel">
+            <input type="text" id="charName" value="CharName">
         </div>
         <div class="control-group">
             <label for="tellsMenu">Tells:</label>
@@ -176,7 +176,6 @@
 </div>
 
 <script>
-// Updated WoTMUD Command List including abbreviations, aliases, and socials
 const wotmudCommands = new Set([
     "l", "t", "r", "drs", "n", "s", "e", "w", "u", "d", "k", "f", "sc", "inv", "i", "eq",
     "say", "tell", "reply", "whisper", "emote", "narrate", "chat", "yell", "shout", "ask", "order", "squit", "gtell", "grouptell", "page",
@@ -198,7 +197,7 @@ function cleanLog() {
         return;
     }
 
-    const charName = document.getElementById('charName').value.trim() || "Amitriel";
+    const charName = document.getElementById('charName').value.trim() || "CharName";
     const keepTells = document.getElementById('tellsMenu').value === 'Keep';
     const keepNarrates = document.getElementById('narratesMenu').value === 'Keep';
     const keepChats = document.getElementById('chatsMenu').value === 'Keep';
