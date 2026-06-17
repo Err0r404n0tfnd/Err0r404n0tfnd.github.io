@@ -115,7 +115,7 @@
             outline: none;
             border-color: #86b7fe;
         }
-         .thank-you-footer {
+        .thank-you-footer {
             margin-top: 30px;
             padding-top: 15px;
             border-top: 1px solid #eaeaea;
@@ -182,6 +182,7 @@
             <textarea id="outputArea" placeholder="Your pristine story will appear here..." readonly></textarea>
         </div>
     </div>
+
     <div class="thank-you-footer">
         <p>Thank you to everyone who helped test, break, and refine this parser! Your logs and feedback made it possible. ❤️</p>
     </div>
@@ -286,7 +287,7 @@ function cleanLog() {
                     cleanedLine = cleanedLine.replace(doubleNameRegex, `${charName} `);
                 }
             } else if (/^(whisper|whis|whi)\s+(\w+)\s+(.+)/i.test(cleanedLine)) {
-                cleanedLine = cleanedLine.replace(/^(whisper|whis|whi)\s+(\w+)\s+(.+)/i, `${charName} whispers to $1 '$2'`);
+                cleanedLine = cleanedLine.replace(/^(whisper|whis|whi)\s+(\w+)\s+(.+)/i, `${charName} whispers to $2 '$3'`);
             } else {
                 const firstWord = cleanedLine.split(/\s+/)[0].toLowerCase();
                 if (wotmudCommands.has(firstWord)) {
@@ -328,7 +329,6 @@ function cleanLog() {
                 let thirdPersonVerb = verb;
                 let lowerVerb = verb.toLowerCase();
                 
-                // Rules for structural third person conversion
                 if (lowerVerb.endsWith('sh') || lowerVerb.endsWith('ch') || lowerVerb.endsWith('x') || lowerVerb.endsWith('z')) {
                     thirdPersonVerb = verb + "es";
                 } else if (lowerVerb.endsWith('y') && !/[aeiou]y$/i.test(lowerVerb)) {
@@ -374,3 +374,4 @@ function copyToClipboard() {
 
 </body>
 </html>
+
