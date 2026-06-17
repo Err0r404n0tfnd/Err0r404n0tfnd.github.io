@@ -178,14 +178,14 @@
 <script>
 const wotmudCommands = new Set([
     "l", "t", "r", "drs", "n", "s", "e", "w", "u", "d", "k", "f", "sc", "inv", "i", "eq",
-    "say", "tell", "reply", "whisper", "emote", "narrate", "chat", "yell", "shout", "ask", "order", "squit", "gtell", "grouptell", "page",
+    "say", "tell", "t", "reply", "whisper", "emote", "narrate", "chat", "yell", "shout", "ask", "order", "squit", "gtell", "grouptell", "page",
     "look", "sit", "stand", "rest", "sleep", "wake", "north", "south", "east", "west", "up", "down", "enter", "leave", "open", "close", "lock", "unlock",
     "get", "take", "drop", "put", "give", "wear", "remove", "wield", "hold", "draw", "sheathe", "examine", "search", "read", "buy", "sell", "list", "value",
     "nod", "nods", "smile", "smiles", "bow", "bows", "curtsy", "wave", "grin", "grins", "laugh", "laughs", "shrug", "shrugs", "sigh", "sighs", "cough", "coughs",
     "stare", "blink", "ponder", "think", "poke", "pokes", "pat", "pats", "hug", "salute", "snap", "choke", "snicker", "gasp", "glance", "shiver", "frown", "scowl",
     "snuggle", "snuggles", "cuddle", "cuddles", "blush", "blushes", "giggle", "giggles", "chuckle", "chuckles", "comfort", "comforts",
     "kill", "attack", "flee", "rescue", "kick", "bash", "trip", "charge", "strike", "disarm", "parry", "dodge", "assist", "hit", "shoot", "channel", "cast",
-    "cure", "heal", "bind", "bandage", "hide", "sneak", "steal", "pick", "backstab", "stab", "track", "ride", "tame", "mount", "dismount",
+    "cure", "heal", "bind", "bandage", "hide", "sneak", "steal", "pick", "backstab", "stab", "track", "ride", "tame", "mount", "dismount", "roll", "ro",
     "score", "attributes", "skills", "spells", "inventory", "equipment", "affected", "where", "who", "whois", "time", "weather", "help", "commands",
     "alias", "tick", "prompt", "color", "toggle", "brief", "compact", "autoexit", "autoloot", "autogold", "cls", "clear", "quit", "save", "echo"
 ]);
@@ -265,7 +265,7 @@ function cleanLog() {
         } 
         else if (echoMode === 'echoOff') {
             if (/^say\s+/i.test(cleanedLine)) {
-                cleanedLine = cleanedLine.replace(/^say\s+(.+)/i, `${charName} says '$1'`);
+                cleanedLine = cleanedLine.replace(/^(say|sa)\s+(.+)/i, `${charName} says '$1'`);
             } else if (/^(em|emo|emote)\s+/i.test(cleanedLine)) {
                 cleanedLine = cleanedLine.replace(/^(em|emo|emote)\s+(.+)/i, `${charName} $2`);
                 
@@ -274,7 +274,7 @@ function cleanLog() {
                     cleanedLine = cleanedLine.replace(doubleNameRegex, `${charName} `);
                 }
             } else if (/^whisper\s+(\w+)\s+(.+)/i.test(cleanedLine)) {
-                cleanedLine = cleanedLine.replace(/^whisper\s+(\w+)\s+(.+)/i, `${charName} whispers to $1 '$2'`);
+                cleanedLine = cleanedLine.replace(/^(whisper|whis|whi)\s+(\w+)\s+(.+)/i, `${charName} whispers to $1 '$2'`);
             } else {
                 const firstWord = cleanedLine.split(/\s+/)[0].toLowerCase();
                 if (wotmudCommands.has(firstWord)) {
