@@ -297,10 +297,16 @@ function cleanLog() {
         }
 
         // 5. Server-Echo Formatting & Social Translation adjustments
-        if (/^What's bothering you\?$/i.test(cleanedLine)) {
+        const normalizedForSocial = cleanedLine
+            .replace(/[’‘]/g, "'")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+
+        if (normalizedForSocial === "what's bothering you?") {
             cleanedLine = `${charName} frowns.`;
         }
-        else if (/^B+r+\.?$/i.test(cleanedLine)) {
+        else if (/^b+r+\.?$/i.test(normalizedForSocial)) {
             cleanedLine = `${charName} shivers.`;
         }
         else if (/^You say '(.+)'/i.test(cleanedLine)) {
